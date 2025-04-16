@@ -1,0 +1,6 @@
+/target
+**/*.rs.bk
+Cargo.lock
+*.png
+*.gif
+.DS_Store

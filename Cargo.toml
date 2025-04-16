@@ -1,0 +1,28 @@
+[package]
+name = "weblook"
+version = "0.1.0"
+edition = "2024"
+authors = ["Kelsea Blackwell"]
+description = "A command-line tool for capturing screenshots and recordings of web pages"
+license = "GPL-3.0"
+repository = "https://github.com/TrippingKelsea/weblookrs"
+readme = "README.md"
+keywords = ["screenshot", "web", "capture", "gif", "recording"]
+categories = ["command-line-utilities", "multimedia"]
+
+[dependencies]
+anyhow = "1.0.98"
+atty = "0.2.14"
+chrono = "0.4.40"
+clap = { version = "4.5.36", features = ["derive"] }
+colored = "3.0.0"
+futures = "0.3.31"
+gif = "0.13.1"
+image = "0.25.6"
+indicatif = "0.17.11"
+rand = "0.9.0"
+tempfile = "3.19.1"
+thirtyfour = "0.35.0"
+tokio = { version = "1.44.2", features = ["full"] }
+url = "2.5.4"
+webp = "0.3.0"

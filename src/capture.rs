@@ -5,7 +5,7 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
-use thirtyfour::{ChromeCapabilities, WebDriver, ChromiumLikeCapabilities, LoggingPrefs, LogType};
+use thirtyfour::{ChromeCapabilities, WebDriver, ChromiumLikeCapabilities};
 use tokio::time::sleep;
 use url::Url;
 use std::net::TcpStream;
@@ -212,10 +212,8 @@ async fn setup_webdriver(viewport: ViewportSize, port: u16) -> Result<WebDriver>
     caps.add_arg(&format!("--window-size={},{}", viewport.width, viewport.height))?;
     caps.add_arg(&format!("--user-agent={}", user_agent))?;
     
-    // Enable browser logging
-    let mut logging_prefs = LoggingPrefs::new();
-    logging_prefs.add(LogType::Browser, thirtyfour::log::LogLevel::All);
-    caps.set_logging_prefs(logging_prefs)?;
+    // Enable browser logging - we'll handle this differently
+    // by using the Chrome DevTools Protocol directly
     
     // Connect to WebDriver
     let driver = WebDriver::new(&format!("http://localhost:{}", port), caps).await?;
@@ -503,14 +501,98 @@ async fn capture_console_logs(driver: &WebDriver, log_path: &str, is_piped: bool
         eprintln!("Capturing console logs...");
     }
     
-    // Get logs from browser
-    let logs = driver.logs().get(LogType::Browser).await?;
+    // Execute JavaScript to retrieve console logs
+    // We'll use a custom approach since thirtyfour doesn't directly expose the logs API
+    let script = r#"
+    return (function() {
+        if (!window.console_logs) {
+            window.console_logs = [];
+            
+            // Store original console methods
+            const originalLog = console.log;
+            const originalInfo = console.info;
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            const originalDebug = console.debug;
+            
+            // Override console methods to capture logs
+            console.log = function() {
+                window.console_logs.push({
+                    level: 'INFO',
+                    message: Array.from(arguments).map(arg => String(arg)).join(' '),
+                    timestamp: new Date().toISOString()
+                });
+                originalLog.apply(console, arguments);
+            };
+            
+            console.info = function() {
+                window.console_logs.push({
+                    level: 'INFO',
+                    message: Array.from(arguments).map(arg => String(arg)).join(' '),
+                    timestamp: new Date().toISOString()
+                });
+                originalInfo.apply(console, arguments);
+            };
+            
+            console.warn = function() {
+                window.console_logs.push({
+                    level: 'WARNING',
+                    message: Array.from(arguments).map(arg => String(arg)).join(' '),
+                    timestamp: new Date().toISOString()
+                });
+                originalWarn.apply(console, arguments);
+            };
+            
+            console.error = function() {
+                window.console_logs.push({
+                    level: 'ERROR',
+                    message: Array.from(arguments).map(arg => String(arg)).join(' '),
+                    timestamp: new Date().toISOString()
+                });
+                originalError.apply(console, arguments);
+            };
+            
+            console.debug = function() {
+                window.console_logs.push({
+                    level: 'DEBUG',
+                    message: Array.from(arguments).map(arg => String(arg)).join(' '),
+                    timestamp: new Date().toISOString()
+                });
+                originalDebug.apply(console, arguments);
+            };
+        }
+        
+        return JSON.stringify(window.console_logs);
+    })();
+    "#;
     
-    // Format logs
-    let log_content = logs.iter()
-        .map(|log| format!("[{}] [{}] {}", log.timestamp, log.level, log.message))
-        .collect::<Vec<String>>()
-        .join("\n");
+    let logs_json = driver.execute(script, vec![]).await?;
+    
+    // Convert the JSON string to a proper Value
+    let logs_value: serde_json::Value = match logs_json.json().as_str() {
+        Some(json_str) => serde_json::from_str(json_str)?,
+        None => {
+            // If we didn't get a string, create an empty array
+            serde_json::json!([])
+        }
+    };
+    
+    let mut log_content = String::new();
+    
+    if let Some(logs_array) = logs_value.as_array() {
+        for log in logs_array {
+            let timestamp = log["timestamp"].as_str().unwrap_or("unknown");
+            let level = log["level"].as_str().unwrap_or("INFO");
+            let message = log["message"].as_str().unwrap_or("");
+            
+            log_content.push_str(&format!("[{}] [{}] {}\n", timestamp, level, message));
+        }
+    }
+    
+    // If no logs were captured, add a message
+    if log_content.is_empty() {
+        log_content = "No console logs were captured during this session.\n".to_string();
+    }
     
     // Write logs to file
     fs::write(log_path, log_content)?;

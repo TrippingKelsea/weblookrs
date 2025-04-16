@@ -16,6 +16,7 @@ I created WebLook to support my local development workflow, particularly when te
 - Support for input/output piping
 - Headless operation
 - Execute custom JavaScript before capture
+- Capture browser console logs
 - Automatic user-agent rotation (Windows/Mac Chrome)
 - Automatic ChromeDriver management
 - Colorful progress indicators with countdown timers
@@ -34,6 +35,7 @@ weblook [OPTIONS] [URL]
 - `--record, -r [SECONDS]`: Create a recording instead of screenshot (default length: 10 seconds)
 - `--size, -s <WIDTHxHEIGHT>`: Set viewport size (default: 1280x720)
 - `--js, -j <CODE>`: Execute JavaScript code before capture
+- `--console-log <FILE>`: Capture browser console logs and save to specified file
 - `--debug, -d`: Enable debug output (shows ChromeDriver messages)
 - `--mcp-server <HOST:PORT>`: [EXPERIMENTAL] Start as MCP server on specified address
 - `--mcp-client <URL>`: [EXPERIMENTAL] Connect to MCP server at specified URL
@@ -59,6 +61,9 @@ weblook --size 1920x1080 https://example.com
 
 # Execute JavaScript before capture
 weblook --js "document.body.style.backgroundColor = 'red';" https://example.com
+
+# Capture console logs to a file
+weblook --console-log console.log https://example.com
 
 # Pipe URL input and output to another command
 echo "https://example.com" | weblook --output - | other-command

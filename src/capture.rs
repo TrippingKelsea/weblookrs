@@ -5,10 +5,11 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
-use thirtyfour::{ChromeCapabilities, WebDriver, ChromiumLikeCapabilities};
+use thirtyfour::{ChromeCapabilities, WebDriver, ChromiumLikeCapabilities, LoggingPrefs, LogType};
 use tokio::time::sleep;
 use url::Url;
 use std::net::TcpStream;
+use std::fs;
 
 /// Options for capturing web content
 pub struct CaptureOptions {
@@ -20,6 +21,7 @@ pub struct CaptureOptions {
     pub debug: bool,
     pub is_recording: bool,
     pub recording_length: Option<u64>,
+    pub console_log: Option<String>,
 }
 
 /// Viewport size representation
@@ -177,6 +179,11 @@ pub async fn perform_capture(options: CaptureOptions) -> Result<()> {
         execute_javascript(&driver, js_code).await?;
     }
     
+    // Capture console logs if requested
+    if let Some(log_path) = &options.console_log {
+        capture_console_logs(&driver, log_path, is_piped, options.debug).await?;
+    }
+    
     // Capture screenshot or recording
     if options.is_recording {
         create_recording(&driver, recording_length, &options.output_path, is_piped, options.debug).await?;
@@ -204,6 +211,11 @@ async fn setup_webdriver(viewport: ViewportSize, port: u16) -> Result<WebDriver>
     caps.add_arg("--disable-gpu")?;
     caps.add_arg(&format!("--window-size={},{}", viewport.width, viewport.height))?;
     caps.add_arg(&format!("--user-agent={}", user_agent))?;
+    
+    // Enable browser logging
+    let mut logging_prefs = LoggingPrefs::new();
+    logging_prefs.add(LogType::Browser, thirtyfour::log::LogLevel::All);
+    caps.set_logging_prefs(logging_prefs)?;
     
     // Connect to WebDriver
     let driver = WebDriver::new(&format!("http://localhost:{}", port), caps).await?;
@@ -478,6 +490,36 @@ fn write_gif_to_buffer<W: Write>(frames: &[image::RgbaImage], buffer: &mut W) ->
         let mut frame = gif::Frame::from_rgb(width as u16, height as u16, &frame_data);
         frame.delay = 10; // 1/10th of a second
         encoder.write_frame(&frame)?;
+    }
+    
+    Ok(())
+}
+/// Capture browser console logs and save to file
+async fn capture_console_logs(driver: &WebDriver, log_path: &str, is_piped: bool, debug: bool) -> Result<()> {
+    if !is_piped && !debug {
+        eprintln!("{}", "Capturing console logs...".bright_cyan());
+        std::io::stderr().flush().ok();
+    } else if !is_piped && debug {
+        eprintln!("Capturing console logs...");
+    }
+    
+    // Get logs from browser
+    let logs = driver.logs().get(LogType::Browser).await?;
+    
+    // Format logs
+    let log_content = logs.iter()
+        .map(|log| format!("[{}] [{}] {}", log.timestamp, log.level, log.message))
+        .collect::<Vec<String>>()
+        .join("\n");
+    
+    // Write logs to file
+    fs::write(log_path, log_content)?;
+    
+    if !is_piped && !debug {
+        eprintln!("{} {}", "✓".green(), format!("Console logs saved to {}", log_path).bright_green());
+        std::io::stderr().flush().ok();
+    } else if !is_piped && debug {
+        eprintln!("Console logs saved to {}", log_path);
     }
     
     Ok(())

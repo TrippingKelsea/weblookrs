@@ -40,6 +40,10 @@ struct Args {
     #[arg(short = 'j', long)]
     js: Option<String>,
     
+    /// Capture browser console logs and save to specified file
+    #[arg(long = "console-log")]
+    console_log: Option<String>,
+    
     /// Enable debug output
     #[arg(short, long)]
     debug: bool,
@@ -105,6 +109,7 @@ async fn run_capture(args: Args) -> Result<()> {
         debug: args.debug,
         is_recording,
         recording_length,
+        console_log: args.console_log,
     };
     
     // Perform capture

@@ -19,6 +19,7 @@ I created WebLook to support my local development workflow, particularly when te
 - Automatic user-agent rotation (Windows/Mac Chrome)
 - Automatic ChromeDriver management
 - Colorful progress indicators with countdown timers
+- **MCP (Model Context Protocol) integration** for AI model interaction
 
 ## Usage
 
@@ -34,6 +35,8 @@ weblook [OPTIONS] [URL]
 - `--size, -s <WIDTHxHEIGHT>`: Set viewport size (default: 1280x720)
 - `--js, -j <CODE>`: Execute JavaScript code before capture
 - `--debug, -d`: Enable debug output (shows ChromeDriver messages)
+- `--mcp-server <HOST:PORT>`: Start as MCP server on specified address
+- `--mcp-client <URL>`: Connect to MCP server at specified URL
 - `--help, -h`: Show help information
 
 ### Examples
@@ -65,6 +68,12 @@ weblook https://example.com --output screenshot.png
 
 # Show debug output
 weblook --debug https://example.com
+
+# Start as an MCP server
+weblook --mcp-server 127.0.0.1:8000
+
+# Use as an MCP client
+weblook --mcp-client http://localhost:8000 https://example.com
 ```
 
 ## Installation

@@ -2,6 +2,10 @@
 
 A command-line tool for capturing screenshots and recordings of web pages.
 
+## Why This Tool Exists
+
+I created WebLook to support my local development workflow, particularly when testing Amazon Q CLI and MCP (Model Context Protocol) applications. I needed a lightweight, read-only web tool with sane defaults that could quickly capture visual states of locally-running web applications without complex configuration. WebLook is designed to be simple, efficient, and integrate seamlessly into development pipelines with minimal overhead.
+
 ## Features
 
 - Take screenshots of web pages

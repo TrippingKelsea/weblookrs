@@ -1,8 +1,8 @@
 use anyhow::Result;
+use base64::Engine;
 use super::mcp_sdk::server::context_action::{ContextAction, Parameter, ParameterType};
 use super::mcp_sdk::server::Server;
 use serde_json::Value;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::capture::{self, CaptureOptions};
@@ -88,7 +88,7 @@ fn capture_screenshot_handler() -> ContextActionHandler {
                 
                 // Read the captured image and encode as base64
                 let image_data = std::fs::read(output_path)?;
-                let base64_data = base64::encode(&image_data);
+                let base64_data = base64::engine::general_purpose::STANDARD.encode(&image_data);
                 
                 // Return the result
                 Ok(serde_json::json!({
@@ -145,7 +145,7 @@ fn record_interaction_handler() -> ContextActionHandler {
                 
                 // Read the captured GIF and encode as base64
                 let gif_data = std::fs::read(output_path)?;
-                let base64_data = base64::encode(&gif_data);
+                let base64_data = base64::engine::general_purpose::STANDARD.encode(&gif_data);
                 
                 // Return the result
                 Ok(serde_json::json!({

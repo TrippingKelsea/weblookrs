@@ -45,7 +45,7 @@ pub mod server {
             println!("Mock MCP server started on {}", self.addr);
             
             // Wait indefinitely
-            let (tx, rx) = oneshot::channel::<()>();
+            let (_tx, rx) = oneshot::channel::<()>();
             let _ = rx.await;
             
             Ok(())
@@ -149,7 +149,7 @@ pub mod client {
             ])
         }
         
-        pub async fn invoke_action(&self, action_name: &str, params: Value) -> Result<Value> {
+        pub async fn invoke_action(&self, action_name: &str, _params: Value) -> Result<Value> {
             // In a real implementation, this would make an HTTP request
             // For now, we just simulate it based on the action name
             match action_name {
@@ -223,12 +223,11 @@ pub mod client {
 }
 
 // Shared types
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct ContextAction {
     pub name: String,
     pub description: String,
     pub parameters: Vec<server::context_action::Parameter>,
-    #[serde(skip)]
     pub handler: Arc<dyn Fn(Value) -> Result<Value> + Send + Sync>,
 }
 

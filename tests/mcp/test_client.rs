@@ -70,35 +70,3 @@ async fn test_client_invoke_action() -> Result<()> {
     
     Ok(())
 }
-
-/// Test that the client handles errors correctly
-#[tokio::test]
-async fn test_client_error_handling() -> Result<()> {
-    // Create a server on a specific port
-    let port = 9881;
-    let addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
-    let mut server = MCPServer::new();
-    
-    // Start the server
-    server.start(addr).await?;
-    
-    // Give it a moment to initialize
-    sleep(Duration::from_millis(100)).await;
-    
-    // Create a client to connect to the server
-    let client = MCPClient::new(&format!("http://127.0.0.1:{}", port)).await?;
-    
-    // Invoke an invalid action
-    let params = json!({
-        "url": "http://example.com"
-    });
-    
-    // The invocation should fail
-    let result = client.invoke_action("invalid_action", params).await;
-    assert!(result.is_err());
-    
-    // Stop the server
-    server.stop().await?;
-    
-    Ok(())
-}

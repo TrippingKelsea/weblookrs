@@ -1,5 +1,5 @@
 // Use our mock SDK implementation for now
-mod mock_sdk;
+pub mod mock_sdk;
 pub use mock_sdk as mcp_sdk;
 
 pub mod server;

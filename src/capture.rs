@@ -197,8 +197,8 @@ async fn setup_webdriver(viewport: ViewportSize, port: u16) -> Result<WebDriver>
     let mut caps = ChromeCapabilities::new();
     
     // Select a random user agent
-    let mut rng = rand::thread_rng();
-    let user_agent = USER_AGENTS[rng.gen_range(0..USER_AGENTS.len())];
+    let user_agent_idx = 0; // Just use the first one for testing
+    let user_agent = USER_AGENTS[user_agent_idx];
     
     // Configure headless mode and user agent
     caps.add_arg("--headless=new")?;

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use mcp_sdk::server::{Server, ServerConfig};
+use super::mcp_sdk::server::{Server, ServerConfig};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::oneshot;

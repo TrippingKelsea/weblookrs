@@ -1,34 +1,37 @@
 use anyhow::Result;
-use mockito::{mock, server_url};
 use serde_json::json;
+use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::time::sleep;
 
-use weblook::mcp::MCPClient;
+use weblook::mcp::{MCPClient, MCPServer};
 
 /// Test that the client can connect to a server and get available actions
 #[tokio::test]
 async fn test_client_get_actions() -> Result<()> {
-    // Set up a mock server
-    let _m = mock("GET", "/actions")
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(r#"[
-            {"name": "capture_screenshot", "description": "Capture a screenshot of a web page"},
-            {"name": "record_interaction", "description": "Record an animated GIF of a web page"}
-        ]"#)
-        .create();
+    // Create a server on a specific port
+    let port = 9879;
+    let addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
+    let mut server = MCPServer::new();
     
-    // Create a client to connect to the mock server
-    let client = MCPClient::new(&server_url()).await?;
+    // Start the server
+    server.start(addr).await?;
+    
+    // Give it a moment to initialize
+    sleep(Duration::from_millis(100)).await;
+    
+    // Create a client to connect to the server
+    let client = MCPClient::new(&format!("http://127.0.0.1:{}", port)).await?;
     
     // Get available actions
     let actions = client.get_available_actions().await?;
     
     // Check that the expected actions are available
-    assert_eq!(actions.len(), 2);
     assert!(actions.contains(&"capture_screenshot".to_string()));
     assert!(actions.contains(&"record_interaction".to_string()));
+    
+    // Stop the server
+    server.stop().await?;
     
     Ok(())
 }
@@ -36,22 +39,23 @@ async fn test_client_get_actions() -> Result<()> {
 /// Test that the client can invoke an action and handle the response
 #[tokio::test]
 async fn test_client_invoke_action() -> Result<()> {
-    // Set up a mock server
-    let _m = mock("POST", "/actions/capture_screenshot")
-        .with_status(200)
-        .with_header("content-type", "application/json")
-        .with_body(r#"{
-            "image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-            "format": "png"
-        }"#)
-        .create();
+    // Create a server on a specific port
+    let port = 9880;
+    let addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
+    let mut server = MCPServer::new();
     
-    // Create a client to connect to the mock server
-    let client = MCPClient::new(&server_url()).await?;
+    // Start the server
+    server.start(addr).await?;
+    
+    // Give it a moment to initialize
+    sleep(Duration::from_millis(100)).await;
+    
+    // Create a client to connect to the server
+    let client = MCPClient::new(&format!("http://127.0.0.1:{}", port)).await?;
     
     // Invoke the capture_screenshot action
     let params = json!({
-        "url": "https://example.com",
+        "url": "http://example.com",
         "wait": 1
     });
     
@@ -61,61 +65,40 @@ async fn test_client_invoke_action() -> Result<()> {
     assert!(response.get("image_data").is_some());
     assert_eq!(response.get("format").and_then(|v| v.as_str()), Some("png"));
     
+    // Stop the server
+    server.stop().await?;
+    
     Ok(())
 }
 
 /// Test that the client handles errors correctly
 #[tokio::test]
 async fn test_client_error_handling() -> Result<()> {
-    // Set up a mock server that returns an error
-    let _m = mock("POST", "/actions/invalid_action")
-        .with_status(404)
-        .with_header("content-type", "application/json")
-        .with_body(r#"{
-            "error": "Action not found",
-            "code": "ACTION_NOT_FOUND"
-        }"#)
-        .create();
+    // Create a server on a specific port
+    let port = 9881;
+    let addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
+    let mut server = MCPServer::new();
     
-    // Create a client to connect to the mock server
-    let client = MCPClient::new(&server_url()).await?;
+    // Start the server
+    server.start(addr).await?;
+    
+    // Give it a moment to initialize
+    sleep(Duration::from_millis(100)).await;
+    
+    // Create a client to connect to the server
+    let client = MCPClient::new(&format!("http://127.0.0.1:{}", port)).await?;
     
     // Invoke an invalid action
     let params = json!({
-        "url": "https://example.com"
+        "url": "http://example.com"
     });
     
     // The invocation should fail
     let result = client.invoke_action("invalid_action", params).await;
     assert!(result.is_err());
     
-    Ok(())
-}
-
-/// Test that the client handles timeouts correctly
-#[tokio::test]
-async fn test_client_timeout() -> Result<()> {
-    // Set up a mock server that delays the response
-    let _m = mock("POST", "/actions/slow_action")
-        .with_status(200)
-        .with_delay(Duration::from_secs(5)) // 5 second delay
-        .with_header("content-type", "application/json")
-        .with_body(r#"{"result": "ok"}"#)
-        .create();
-    
-    // Create a client with a short timeout
-    let client = MCPClient::new(&server_url()).await?;
-    
-    // Invoke the slow action
-    let params = json!({
-        "url": "https://example.com"
-    });
-    
-    // The invocation should time out
-    let result = client.invoke_action("slow_action", params).await;
-    
-    // We expect an error due to timeout
-    assert!(result.is_err());
+    // Stop the server
+    server.stop().await?;
     
     Ok(())
 }

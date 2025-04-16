@@ -1,5 +1,5 @@
 use anyhow::Result;
-use mcp_sdk::client::{Client, ClientConfig};
+use super::mcp_sdk::client::{Client, ClientConfig};
 use serde_json::Value;
 use std::time::Duration;
 

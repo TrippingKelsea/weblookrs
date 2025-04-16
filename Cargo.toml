@@ -10,6 +10,14 @@ readme = "README.md"
 keywords = ["screenshot", "web", "capture", "gif", "recording"]
 categories = ["command-line-utilities", "multimedia"]
 
+[lib]
+name = "weblook"
+path = "src/lib.rs"
+
+[[bin]]
+name = "weblook"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.98"
 atty = "0.2.14"
@@ -30,3 +38,6 @@ thirtyfour = "0.35.0"
 tokio = { version = "1.44.2", features = ["full"] }
 url = "2.5.4"
 webp = "0.3.0"
+
+[dev-dependencies]
+mockito = "1.4.0"

@@ -26,6 +26,11 @@
    - Configurable wait time before capture
    - Configurable recording length for GIFs
 
+5. **Experimental Features**:
+   - MCP (Model Context Protocol) integration as an optional feature
+   - Enabled via the `mcp_experimental` feature flag
+   - Support for both server and client modes
+
 ## Implementation Approaches
 
 ### Approach 1: Headless Chrome with WebDriver
@@ -87,3 +92,11 @@
 - Less accurate representation of how pages appear to users
 
 Each approach offers different trade-offs between accuracy, resource usage, dependencies, and complexity. The best choice depends on the specific requirements for accuracy of rendering, resource constraints, and deployment environment.
+
+## Feature Flags
+
+1. **mcp_experimental**:
+   - Enables the experimental MCP (Model Context Protocol) integration
+   - When enabled, adds MCP server and client functionality
+   - Disabled by default to keep the core tool lightweight
+   - Can be enabled with `cargo build --features mcp_experimental`

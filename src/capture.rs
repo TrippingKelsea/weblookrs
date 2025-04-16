@@ -1,14 +1,13 @@
 use anyhow::{Context, Result};
 use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::io::{self, Read, Write};
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 use thirtyfour::{ChromeCapabilities, WebDriver, ChromiumLikeCapabilities};
 use tokio::time::sleep;
 use url::Url;
-use rand::Rng;
 use std::net::TcpStream;
 
 /// Options for capturing web content

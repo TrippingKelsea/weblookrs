@@ -18,6 +18,11 @@ path = "src/lib.rs"
 name = "weblook"
 path = "src/main.rs"
 
+[features]
+default = []
+# Experimental MCP (Model Context Protocol) support
+mcp_experimental = []
+
 [dependencies]
 anyhow = "1.0.98"
 atty = "0.2.14"

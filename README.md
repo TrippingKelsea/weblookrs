@@ -19,7 +19,7 @@ I created WebLook to support my local development workflow, particularly when te
 - Automatic user-agent rotation (Windows/Mac Chrome)
 - Automatic ChromeDriver management
 - Colorful progress indicators with countdown timers
-- **MCP (Model Context Protocol) integration** for AI model interaction
+- **[EXPERIMENTAL] MCP (Model Context Protocol) integration** for AI model interaction
 
 ## Usage
 
@@ -35,8 +35,8 @@ weblook [OPTIONS] [URL]
 - `--size, -s <WIDTHxHEIGHT>`: Set viewport size (default: 1280x720)
 - `--js, -j <CODE>`: Execute JavaScript code before capture
 - `--debug, -d`: Enable debug output (shows ChromeDriver messages)
-- `--mcp-server <HOST:PORT>`: Start as MCP server on specified address
-- `--mcp-client <URL>`: Connect to MCP server at specified URL
+- `--mcp-server <HOST:PORT>`: [EXPERIMENTAL] Start as MCP server on specified address
+- `--mcp-client <URL>`: [EXPERIMENTAL] Connect to MCP server at specified URL
 - `--help, -h`: Show help information
 
 ### Examples
@@ -69,17 +69,21 @@ weblook https://example.com --output screenshot.png
 # Show debug output
 weblook --debug https://example.com
 
-# Start as an MCP server
+# [EXPERIMENTAL] Start as an MCP server
 weblook --mcp-server 127.0.0.1:8000
 
-# Use as an MCP client
+# [EXPERIMENTAL] Use as an MCP client
 weblook --mcp-client http://localhost:8000 https://example.com
 ```
 
 ## Installation
 
 ```bash
+# Install without experimental MCP support
 cargo install weblook
+
+# Install with experimental MCP support
+cargo install weblook --features mcp_experimental
 ```
 
 ## Requirements
@@ -87,6 +91,21 @@ cargo install weblook
 - ChromeDriver must be installed
   - Install ChromeDriver: `sudo apt install chromium-chromedriver` (Ubuntu/Debian)
   - The application will automatically start and stop ChromeDriver as needed
+
+## Experimental Features
+
+### MCP (Model Context Protocol) Integration
+
+The MCP integration is currently experimental and requires compiling with the `mcp_experimental` feature flag. This feature allows WebLook to:
+
+1. Act as an MCP server that other applications can connect to
+2. Act as an MCP client that can connect to other MCP servers
+
+To enable MCP support:
+
+```bash
+cargo build --features mcp_experimental
+```
 
 ## License
 

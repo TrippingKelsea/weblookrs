@@ -1,12 +1,14 @@
 use anyhow::{Context, Result};
+use base64::Engine;
 use clap::Parser;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use tokio::signal;
 use url::Url;
 
 mod capture;
+#[cfg(feature = "mcp_experimental")]
 mod mcp;
 
 use capture::CaptureOptions;
@@ -42,11 +44,13 @@ struct Args {
     #[arg(short, long)]
     debug: bool,
     
-    /// Start as MCP server on specified address (format: host:port)
+    /// [EXPERIMENTAL] Start as MCP server on specified address (format: host:port)
+    #[cfg(feature = "mcp_experimental")]
     #[arg(long)]
     mcp_server: Option<String>,
     
-    /// Connect to MCP server at specified URL
+    /// [EXPERIMENTAL] Connect to MCP server at specified URL
+    #[cfg(feature = "mcp_experimental")]
     #[arg(long)]
     mcp_client: Option<String>,
 }
@@ -56,13 +60,15 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     
     // Check if we're running in MCP server mode
+    #[cfg(feature = "mcp_experimental")]
     if let Some(addr_str) = args.mcp_server {
         return run_mcp_server(addr_str).await;
     }
     
     // Check if we're running in MCP client mode
-    if let Some(endpoint) = args.mcp_client {
-        return run_mcp_client(endpoint, &args).await;
+    #[cfg(feature = "mcp_experimental")]
+    if let Some(ref endpoint) = args.mcp_client {
+        return run_mcp_client(endpoint.clone(), &args).await;
     }
     
     // Normal capture mode
@@ -105,12 +111,13 @@ async fn run_capture(args: Args) -> Result<()> {
     capture::perform_capture(options).await
 }
 
+#[cfg(feature = "mcp_experimental")]
 async fn run_mcp_server(addr_str: String) -> Result<()> {
     // Parse socket address
     let addr: SocketAddr = addr_str.parse()
         .context("Invalid MCP server address format. Expected format: host:port")?;
     
-    println!("Starting MCP server on {}...", addr);
+    println!("Starting MCP server on {}... (EXPERIMENTAL FEATURE)", addr);
     
     // Create and start MCP server
     let mut server = mcp::MCPServer::new();
@@ -128,8 +135,9 @@ async fn run_mcp_server(addr_str: String) -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "mcp_experimental")]
 async fn run_mcp_client(endpoint: String, args: &Args) -> Result<()> {
-    println!("Connecting to MCP server at {}...", endpoint);
+    println!("Connecting to MCP server at {}... (EXPERIMENTAL FEATURE)", endpoint);
     
     // Create MCP client
     let client = mcp::MCPClient::new(&endpoint).await?;
@@ -157,7 +165,7 @@ async fn run_mcp_client(endpoint: String, args: &Args) -> Result<()> {
         // Handle response
         if let Some(image_data) = response["image_data"].as_str() {
             // Decode base64 data
-            let decoded = base64::decode(image_data)?;
+            let decoded = base64::engine::general_purpose::STANDARD.decode(image_data)?;
             
             // Determine output path
             let output_path = determine_output_path(args.output.clone(), true)?;
@@ -187,7 +195,7 @@ async fn run_mcp_client(endpoint: String, args: &Args) -> Result<()> {
         // Handle response
         if let Some(image_data) = response["image_data"].as_str() {
             // Decode base64 data
-            let decoded = base64::decode(image_data)?;
+            let decoded = base64::engine::general_purpose::STANDARD.decode(image_data)?;
             
             // Determine output path
             let output_path = determine_output_path(args.output.clone(), false)?;

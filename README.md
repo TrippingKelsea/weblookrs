@@ -83,12 +83,22 @@ weblook --mcp-client http://localhost:8000 https://example.com
 
 ## Installation
 
-```bash
-# Install without experimental MCP support
-cargo install weblook
+WebLook is currently not available on crates.io. To install:
 
-# Install with experimental MCP support
-cargo install weblook --features mcp_experimental
+```bash
+# Clone the repository
+git clone https://github.com/username/weblook.git
+cd weblook
+
+# Build and install without experimental MCP support
+cargo build --release
+
+# Build with experimental MCP support
+cargo build --release --features mcp_experimental
+
+# The binary will be available at target/release/weblook
+# You can copy it to a directory in your PATH for easier access
+cp target/release/weblook ~/.local/bin/  # or another directory in your PATH
 ```
 
 ## Requirements
